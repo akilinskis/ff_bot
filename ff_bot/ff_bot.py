@@ -239,7 +239,8 @@ def get_survivor_results(league):
         text = ended_str
     else:
         eliminated_str = ['Eliminated this week: %s with %.2f points' % (eliminated_team_this_week, eliminated_score_this_week)]
-        contending_str = ['Teams still contending:'] + contending_teams
+        contending_str = ['Teams still contending:']
+        contending_str.extend(contending_teams)
         text = eliminated_str + contending_str
 
     return '\n'.join(text)
