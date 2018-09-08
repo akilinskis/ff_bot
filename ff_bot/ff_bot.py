@@ -197,6 +197,54 @@ def get_trophies(league):
     text = ['Trophies of the week:'] + low_score_str + high_score_str + close_score_str + blowout_str
     return '\n'.join(text)
 
+
+def get_survivor_results(league):
+    #Gets survivor results
+    current_week = pranks_week(league)
+    eliminated_teams = []
+    contending_teams = []
+    eliminated_team_this_week = 'Placeholder'
+    eliminated_score_this_week = 9999
+    contest_ended = False
+    for matchup in league.scoreboard():
+        contending_teams.append(matchup.home_team)
+        contending_teams.append(matchup.away_team)
+
+    if current_week >= len(contending_teams):
+        contest_ended = True
+
+    num_weeks = min(current_week, len(contending_teams) - 1)
+
+    for i in xrange(1, num_weeks):
+        weekly_matchups = league.scoreboard(week=i)
+        lowest_scoring_team = contending_teams[0]
+        lowest_score = 9999
+        for matchup in weekly_matchups:
+            if matchup.home_score < lowest_score and contending_teams.count(matchup.home_team) > 0:
+                lowest_score = matchup.home_score
+                lowest_scoring_team = matchup.home_team
+            if matchup.away_score < lowest_score and contending_teams.count(matchup.away_team) > 0:
+                lowest_score = matchup.away_score
+                lowest_scoring_team = matchup.away_team
+
+        if i == current_week:
+            eliminated_team_this_week = lowest_scoring_team
+            eliminated_score_this_week = lowest_score
+
+        eliminated_teams.append(lowest_scoring_team)
+        contending_teams.remove(lowest_scoring_team)
+
+    if contest_ended:
+        ended_str = ['Survivor has already ended -- congrats again to %s' % (contending_teams[0])]
+        text = ended_str
+    else:
+        eliminated_str = ['Eliminated this week: %s with %.2f points' % (eliminated_team_this_week, eliminated_score_this_week)]
+        contending_str = ['Teams still contending:'] + contending_teams
+        text = eliminated_str + contending_str
+
+    return '\n'.join(text)
+
+
 def bot_main(function):
     try:
         bot_id = os.environ["BOT_ID"]
@@ -227,6 +275,7 @@ def bot_main(function):
         print(get_close_scores(league))
         print(get_power_rankings(league))
         print(get_trophies(league))
+        print(get_survivor_results(league))
         function="get_final"
         #bot.send_message(get_trophies(league))
         bot.send_message("test complete")
@@ -254,6 +303,10 @@ def bot_main(function):
         slack_bot.send_message(text)
     elif function=="get_trophies":
         text = get_trophies(league)
+        bot.send_message(text)
+        slack_bot.send_message(text)
+    elif function=="get_survivor_results":
+        text = get_survivor_results(league)
         bot.send_message(text)
         slack_bot.send_message(text)
     elif function=="get_final":
@@ -301,6 +354,7 @@ if __name__ == '__main__':
     #matchups:                           thursday evening at 7:30pm.
     #close scores (within 15.99 points): monday evening at 6:30pm.
     #trophies:                           tuesday morning at 7:30am.
+    #survivor results:                   tuesday morning at 7:30am.
     #score update:                       friday, monday, and tuesday morning at 7:30am.
     #score update:                       sunday at 1pm, 4pm, 8pm.
 
@@ -314,6 +368,9 @@ if __name__ == '__main__':
         day_of_week='mon', hour=18, minute=30, start_date=ff_start_date, end_date=ff_end_date,
         timezone=myTimezone, replace_existing=True)
     sched.add_job(bot_main, 'cron', ['get_final'], id='final',
+        day_of_week='tue', hour=7, minute=30, start_date=ff_start_date, end_date=ff_end_date,
+        timezone=myTimezone, replace_existing=True)
+    sched.add_job(bot_main, 'cron', ['get_survivor_results'], id='survivor_results',
         day_of_week='tue', hour=7, minute=30, start_date=ff_start_date, end_date=ff_end_date,
         timezone=myTimezone, replace_existing=True)
     sched.add_job(bot_main, 'cron', ['get_scoreboard_short'], id='scoreboard1',
