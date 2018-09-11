@@ -313,6 +313,7 @@ def bot_main(function):
     elif function=="get_final":
         text = "Final " + get_scoreboard_short(league, True)
         text = text + "\n\n" + get_trophies(league)
+        text = text + "\n\n" + get_survivor_results(league)
         if test:
             print(text)
         else:
@@ -369,9 +370,6 @@ if __name__ == '__main__':
         day_of_week='mon', hour=18, minute=30, start_date=ff_start_date, end_date=ff_end_date,
         timezone=myTimezone, replace_existing=True)
     sched.add_job(bot_main, 'cron', ['get_final'], id='final',
-        day_of_week='tue', hour=7, minute=30, start_date=ff_start_date, end_date=ff_end_date,
-        timezone=myTimezone, replace_existing=True)
-    sched.add_job(bot_main, 'cron', ['get_survivor_results'], id='survivor_results',
         day_of_week='tue', hour=7, minute=30, start_date=ff_start_date, end_date=ff_end_date,
         timezone=myTimezone, replace_existing=True)
     sched.add_job(bot_main, 'cron', ['get_scoreboard_short'], id='scoreboard1',
